@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeAccount.getDisplayPublicKeys`, to show each display public key separately.
+
 ## 2.52.0 (2026-10-15)
 
 - added: `EdgeTxActionSwap.privacy`, for swaps routed privately.

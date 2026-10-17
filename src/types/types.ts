@@ -2001,6 +2001,9 @@ export interface EdgeAccount {
   // Key access:
   readonly getDisplayPrivateKey: (walletId: string) => Promise<string>
   readonly getDisplayPublicKey: (walletId: string) => Promise<string>
+  readonly getDisplayPublicKeys: (
+    walletId: string
+  ) => Promise<{ [name: string]: string }>
   readonly getRawPrivateKey: (walletId: string) => Promise<JsonObject>
   readonly getRawPublicKey: (walletId: string) => Promise<JsonObject>
 

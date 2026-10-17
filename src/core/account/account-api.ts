@@ -630,6 +630,24 @@ export function makeAccountApi(ai: ApiInput, accountId: string): EdgeAccount {
       return out
     },
 
+    async getDisplayPublicKeys(
+      walletId: string
+    ): Promise<{ [name: string]: string }> {
+      const info = getRawPrivateKey(ai, accountId, walletId)
+      const pluginId = findCurrencyPluginId(
+        ai.props.state.plugins.currency,
+        info.type
+      )
+      const tools = await getCurrencyTools(ai, pluginId)
+      if (tools.getDisplayPublicKeys == null) {
+        return { publicKey: await out.getDisplayPublicKey(walletId) }
+      }
+
+      const disklet = makeLocalDisklet(ai.props.io, walletId)
+      const publicInfo = await getPublicWalletInfo(info, disklet, tools)
+      return tools.getDisplayPublicKeys(publicInfo)
+    },
+
     async getRawPrivateKey(walletId: string): Promise<object> {
       return getRawPrivateKey(ai, accountId, walletId).keys
     },
