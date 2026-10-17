@@ -110,6 +110,12 @@ export interface FakePluginTestConfig {
    * engine's own status, so a test can hold or reject that query.
    */
   stakingStatusHook?: () => Promise<EdgeStakingStatus>
+
+  /**
+   * If set, the tools omit `getDisplayPublicKeys`,
+   * modeling a plugin that only has a single display key.
+   */
+  omitDisplayPublicKeys?: boolean
 }
 
 export const fakePluginTestConfig: FakePluginTestConfig = {
@@ -123,7 +129,8 @@ export const fakePluginTestConfig: FakePluginTestConfig = {
   failEngineFor: undefined,
   onEngineKill: undefined,
   onEngineCallbacks: undefined,
-  stakingStatusHook: undefined
+  stakingStatusHook: undefined,
+  omitDisplayPublicKeys: undefined
 }
 
 /**
@@ -522,6 +529,14 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
     privateWalletInfo: EdgeWalletInfo
   ): Promise<string> {
     return 'xpub'
+  }
+
+  // Absent when a test models a single-key plugin:
+  get getDisplayPublicKeys():
+    | ((publicWalletInfo: EdgeWalletInfo) => { [name: string]: string })
+    | undefined {
+    if (fakePluginTestConfig.omitDisplayPublicKeys === true) return
+    return () => ({ segwit: 'zpub', wrappedSegwit: 'ypub' })
   }
 
   getSplittableTypes(publicWalletInfo: EdgeWalletInfo): string[] {

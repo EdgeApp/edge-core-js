@@ -9,6 +9,7 @@ import {
   makeFakeEdgeWorld
 } from '../../../src/index'
 import { expectRejection } from '../../expect-rejection'
+import { fakePluginTestConfig } from '../../fake/fake-currency-plugin'
 import { fakeUser } from '../../fake/fake-user'
 
 const plugins = { fakecoin: true, tulipcoin: true }
@@ -189,6 +190,29 @@ describe('account', function () {
     })
     expect(await account.getDisplayPrivateKey(walletId)).deep.equals('xpriv')
     expect(await account.getDisplayPublicKey(walletId)).deep.equals('xpub')
+    expect(await account.getDisplayPublicKeys(walletId)).deep.equals({
+      segwit: 'zpub',
+      wrappedSegwit: 'ypub'
+    })
+  })
+
+  it('falls back to a single display public key', async function () {
+    fakePluginTestConfig.omitDisplayPublicKeys = true
+    try {
+      const world = await makeFakeEdgeWorld([fakeUser], quiet)
+      const context = await world.makeEdgeContext(contextOptions)
+      const account = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+
+      const walletId = 'narfavJN4rp9ZzYigcRj1i0vrU2OAGGp4+KksAksj54='
+      expect(await account.getDisplayPublicKeys(walletId)).deep.equals({
+        publicKey: 'xpub'
+      })
+    } finally {
+      fakePluginTestConfig.omitDisplayPublicKeys = undefined
+    }
   })
 
   it('parses a URI without a wallet', async function () {
