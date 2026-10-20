@@ -1606,7 +1606,11 @@ export interface EdgeSwapRequest extends EdgeSwapRequestBase {
 export interface EdgeSwapSendRequest extends EdgeSwapRequestBase {
   toPluginId: string
 
-  /** The destination addresses. The first entry is the payout address. */
+  /**
+   * The destination addresses. The first entry is the caller's preferred
+   * payout address. A plugin that can only pay out to a specific address type
+   * (such as a Zcash transparent address) picks that entry from the list.
+   */
   toAddresses: EdgeAddress[]
 
   /**

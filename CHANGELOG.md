@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Document `EdgeSwapSendRequest.toAddresses` as a preferred-first list that a plugin can pick a specific address type from.
+
 ## 2.52.0 (2026-10-15)
 
 - added: `EdgeTxActionSwap.privacy`, for swaps routed privately.
