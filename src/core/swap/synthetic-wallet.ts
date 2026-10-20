@@ -20,7 +20,7 @@ export const SYNTHETIC_WALLET_ID_PREFIX = 'synthetic://'
  * backed by the real `currencyConfig` core already holds, so `currencyInfo`
  * and `currencyConfig.allTokens` are authentic, while `getAddresses` returns
  * the caller's destination addresses verbatim and `getReceiveAddress` returns
- * the first one (the payout address).
+ * the first one (the caller's preferred payout address).
  *
  * It is bridgified here (core-side) so swap-plugin method calls work unchanged
  * and so it survives the yaob wire format when it rides back to the GUI inside
