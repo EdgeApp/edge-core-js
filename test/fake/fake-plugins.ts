@@ -19,5 +19,21 @@ export const allPlugins = {
     pluginId: 'tulipcoin',
     walletType: 'wallet:tulipcoin'
   }),
+  bitcoin: makeFakeCurrencyPlugin({
+    assetDisplayName: 'Bitcoin',
+    chainDisplayName: 'Bitcoin',
+    currencyCode: 'BTC',
+    displayName: 'Bitcoin',
+    pluginId: 'bitcoin',
+    walletType: 'wallet:bitcoin'
+  }),
+  ecashbitcoin: makeFakeCurrencyPlugin({
+    assetDisplayName: 'eCash',
+    chainDisplayName: 'eCash',
+    currencyCode: 'ECX',
+    displayName: 'eCash',
+    pluginId: 'ecashbitcoin',
+    walletType: 'wallet:ecashbitcoin'
+  }),
   fakeswap: fakeSwapPlugin
 }

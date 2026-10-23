@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Splitting a Bitcoin wallet into eCash (ECX) sweeps the new ECX wallet to itself once it syncs, so its coins leave the UTXOs it shares with Bitcoin. The wallet records the sweep in `EcxProtection.json`, and a sweep left unfinished resumes at its next load.
+
 ## 2.53.0 (2026-10-20)
 
 - changed: Document `EdgeSwapSendRequest.toAddresses` as a preferred-first list that a plugin can pick a specific address type from.

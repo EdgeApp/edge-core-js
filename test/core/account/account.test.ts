@@ -5,10 +5,13 @@ import { describe, it } from 'mocha'
 import {
   EdgeAccount,
   EdgeSwapSendRequest,
+  EdgeTransaction,
   EdgeWalletInfoFull,
   makeFakeEdgeWorld
 } from '../../../src/index'
+import { snooze } from '../../../src/util/snooze'
 import { expectRejection } from '../../expect-rejection'
+import { fakePluginTestConfig } from '../../fake/fake-currency-plugin'
 import { fakeUser } from '../../fake/fake-user'
 
 const plugins = { fakecoin: true, tulipcoin: true }
@@ -378,6 +381,133 @@ describe('account', function () {
       account.splitWalletInfo(tulipWallet.id, 'wallet:fakecoin'),
       'Error: This wallet has already been split (wallet:fakecoin)'
     )
+  })
+
+  it('sweeps ecashbitcoin wallets split from bitcoin', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { bitcoin: true, ecashbitcoin: true }
+    })
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const bitcoinWallet = await account.createCurrencyWallet('wallet:bitcoin')
+
+    let broadcastCount = 0
+    const broadcast = new Promise<EdgeTransaction>(resolve => {
+      fakePluginTestConfig.onBroadcast = tx => {
+        ++broadcastCount
+        resolve(tx)
+      }
+    })
+    try {
+      const [result] = await bitcoinWallet.split([
+        { walletType: 'wallet:ecashbitcoin' }
+      ])
+      if (!result.ok) throw result.error
+
+      // The sweep waits for the new wallet to sync:
+      await account.currencyConfig.ecashbitcoin.changeUserSettings({
+        balance: 1000,
+        progress: 1
+      })
+      const tx = await broadcast
+      expect(tx.walletId).equals(result.result.id)
+      expect(tx.nativeAmount).equals('1000')
+      expect(tx.spendTargets?.[0].publicAddress).equals('fakesegwit')
+
+      // The wallet sweeps once and records the sweep for the GUI:
+      await snooze(100)
+      expect(broadcastCount).equals(1)
+      expect(
+        JSON.parse(await result.result.disklet.getText('EcxProtection.json'))
+      ).deep.equals({ status: 'sent', txid: 'spend' })
+    } finally {
+      fakePluginTestConfig.onBroadcast = undefined
+    }
+  })
+
+  it('resumes an unfinished ecashbitcoin sweep on the next login', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { bitcoin: true, ecashbitcoin: true }
+    })
+    const errors: unknown[] = []
+    context.on('error', error => errors.push(error))
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const bitcoinWallet = await account.createCurrencyWallet('wallet:bitcoin')
+
+    const broadcasts: EdgeTransaction[] = []
+    fakePluginTestConfig.onBroadcast = tx => broadcasts.push(tx)
+    try {
+      const [result] = await bitcoinWallet.split([
+        { walletType: 'wallet:ecashbitcoin' }
+      ])
+      if (!result.ok) throw result.error
+      const ecashWalletId = result.result.id
+
+      // Log out before the new wallet syncs, leaving the sweep unsent:
+      await account.logout()
+      await snooze(100)
+      expect(broadcasts).deep.equals([])
+      expect(errors).deep.equals([])
+
+      // The next login sweeps once the wallet syncs:
+      const nextAccount = await context.loginWithPIN(
+        fakeUser.username,
+        fakeUser.pin
+      )
+      const broadcast = new Promise<EdgeTransaction>(resolve => {
+        fakePluginTestConfig.onBroadcast = resolve
+      })
+      await nextAccount.currencyConfig.ecashbitcoin.changeUserSettings({
+        balance: 1000,
+        progress: 1
+      })
+      const tx = await broadcast
+      expect(tx.walletId).equals(ecashWalletId)
+      expect(tx.nativeAmount).equals('1000')
+      expect(errors).deep.equals([])
+    } finally {
+      fakePluginTestConfig.onBroadcast = undefined
+    }
+  })
+
+  it('splits empty bitcoin wallets into ecashbitcoin', async function () {
+    const world = await makeFakeEdgeWorld([fakeUser], quiet)
+    const context = await world.makeEdgeContext({
+      ...contextOptions,
+      plugins: { bitcoin: true, ecashbitcoin: true }
+    })
+    const errors: unknown[] = []
+    context.on('error', error => errors.push(error))
+    const account = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const bitcoinWallet = await account.createCurrencyWallet('wallet:bitcoin')
+
+    const broadcasts: EdgeTransaction[] = []
+    fakePluginTestConfig.onBroadcast = tx => broadcasts.push(tx)
+    try {
+      const [result] = await bitcoinWallet.split([
+        { walletType: 'wallet:ecashbitcoin' }
+      ])
+      if (!result.ok) throw result.error
+      expect(account.getFirstWalletInfo('wallet:ecashbitcoin')?.id).equals(
+        result.result.id
+      )
+
+      // Finish syncing with no funds, leaving the sweep nothing to move:
+      await account.currencyConfig.ecashbitcoin.changeUserSettings({
+        progress: 1
+      })
+      await snooze(100)
+      expect(broadcasts).deep.equals([])
+      expect(errors).deep.equals([])
+      expect(
+        JSON.parse(await result.result.disklet.getText('EcxProtection.json'))
+      ).deep.equals({ status: 'empty' })
+    } finally {
+      fakePluginTestConfig.onBroadcast = undefined
+    }
   })
 
   it('hides keys', async function () {
