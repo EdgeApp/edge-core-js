@@ -70,6 +70,7 @@ import {
 } from './currency-wallet-cleaners'
 import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
+  isTxFileSaved,
   loadTxFiles,
   renameCurrencyWallet,
   saveTxMetadataFile,
@@ -885,20 +886,36 @@ export function makeCurrencyWalletApi(
     },
     async saveTx(transaction: EdgeTransaction): Promise<void> {
       const engine = await getEngine()
-      if (input.props.walletState.txs[transaction.txid] == null) {
+      const { tokenId, txid } = transaction
+      if (await isTxFileSaved(input, txid)) {
+        // Saving a saved transaction again changes nothing.
+        // Use `saveTxMetadata` or `saveTxAction` to edit it:
+        if (input.props.walletState.txs[txid] != null) {
+          await updateCurrencyWalletTxMetadata(
+            input,
+            txid,
+            tokenId,
+            fakeCallbacks
+          )
+        }
+      } else {
+        // The engine may report a transaction before the caller saves it,
+        // which only sets up its metadata in memory, so save the caller's:
         const { fileName, txFile } = await setupNewTxMetadata(
           input,
           transaction
         )
         await saveTxMetadataFile(input, fileName, txFile)
-        fakeCallbacks.onTransactions([{ isNew: true, transaction }])
-      } else {
-        await updateCurrencyWalletTxMetadata(
-          input,
-          transaction.txid,
-          transaction.tokenId,
-          fakeCallbacks
-        )
+
+        const reduxTx = input.props.walletState.txs[txid]
+        fakeCallbacks.onTransactions([
+          reduxTx == null
+            ? { isNew: true, transaction }
+            : {
+                isNew: false,
+                transaction: combineTxWithFile(input, reduxTx, txFile, tokenId)
+              }
+        ])
       }
       await engine.saveTx(transaction)
     },
