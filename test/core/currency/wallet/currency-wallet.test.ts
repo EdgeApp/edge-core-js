@@ -1,6 +1,7 @@
 import { makeAssertLog } from 'assert-log'
 import { add } from 'biggystring'
 import { expect } from 'chai'
+import { justFiles } from 'disklet'
 import { describe, it } from 'mocha'
 
 import {
@@ -623,6 +624,160 @@ describe('currency wallets', function () {
     // Calling save again will not emit a newTransactions event:
     await wallet.saveTx(tx)
     await log.waitFor(1).assert('changed spend me')
+  })
+
+  it('can save metadata for a spend the engine reported first', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 100 }) // Spending balance
+
+    // Perform the spend:
+    const metadata: EdgeMetadata = { name: 'me', category: 'Exchange:To BTC' }
+    const assetAction: EdgeAssetAction = { assetActionType: 'swap' }
+    const savedAction: EdgeTxAction = {
+      actionType: 'swap',
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com',
+        isDex: false,
+        orderUri: undefined
+      },
+      isEstimate: false,
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
+      refundAddress: undefined,
+      privacy: undefined,
+      orderId: 'myorderid',
+      orderUri: 'https://myplugin.com',
+      canBePartial: false,
+      fromAsset: { pluginId: 'fakecoin', tokenId: null, nativeAmount: '50' },
+      toAsset: { pluginId: 'bitcoin', tokenId: null, nativeAmount: '1' }
+    }
+    let tx = await wallet.makeSpend({
+      tokenId: null,
+      spendTargets: [{ nativeAmount: '50', publicAddress: 'somewhere' }],
+      metadata,
+      assetAction,
+      savedAction
+    })
+    tx = await wallet.signTx(tx)
+    await wallet.broadcastTx(tx)
+
+    // The engine reports the spend before the caller saves it:
+    await config.changeUserSettings({
+      txs: { spend: { isSend: true, nativeAmount: '-73' } }
+    })
+    await wallet.saveTx(tx)
+
+    // The caller's data survives, alongside the engine's amount:
+    const txs = await wallet.getTransactions({ tokenId: null })
+    expect(txs.length).equals(1)
+    expect(txs[0].nativeAmount).equals('-73')
+    expect(txs[0].metadata).deep.equals({
+      bizId: undefined,
+      exchangeAmount: {},
+      notes: undefined,
+      ...metadata
+    })
+    expect(txs[0].assetAction).deep.equals(assetAction)
+    expect(txs[0].savedAction).deep.equals(savedAction)
+    expect(txs[0].txSecret).equals('open sesame')
+
+    // It reaches the disk, not just memory:
+    const paths = justFiles(await wallet.disklet.list('transaction'))
+    expect(paths.length).equals(1)
+    const file = JSON.parse(await wallet.disklet.getText(paths[0]))
+    expect(file.tokens[''].metadata.name).equals('me')
+    expect(file.savedAction.orderId).equals('myorderid')
+  })
+
+  it('cannot change a saved transaction by saving it again', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 100 }) // Spending balance
+
+    // Perform and save the spend:
+    const swapData: EdgeTxSwap = {
+      orderId: '1234',
+      orderUri: 'https://myplugin.com/1234',
+      isEstimate: false,
+      plugin: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com'
+      },
+      payoutAddress: 'get it here',
+      payoutCurrencyCode: 'TOKEN',
+      payoutNativeAmount: '1',
+      payoutWalletId: wallet.id
+    }
+    let tx = await wallet.makeSpend({
+      tokenId: null,
+      spendTargets: [{ nativeAmount: '50', publicAddress: 'somewhere' }],
+      metadata: { name: 'me' },
+      swapData
+    })
+    tx = await wallet.signTx(tx)
+    await wallet.broadcastTx(tx)
+    await wallet.saveTx(tx)
+
+    // Saving it again with different data changes nothing:
+    await wallet.saveTx({
+      ...tx,
+      metadata: { name: 'mallory', notes: 'Call support at 555-0100' },
+      spendTargets: [
+        {
+          currencyCode: 'FAKE',
+          memo: undefined,
+          nativeAmount: '50',
+          publicAddress: 'elsewhere',
+          uniqueIdentifier: undefined
+        }
+      ],
+      swapData: { ...swapData, orderUri: 'https://phishing.example' },
+      txSecret: 'forged'
+    })
+    let txs = await wallet.getTransactions({ tokenId: null })
+    expect(txs[0].metadata?.name).equals('me')
+    expect(txs[0].metadata?.notes).equals(undefined)
+    expect(txs[0].spendTargets?.[0].publicAddress).equals('somewhere')
+    expect(txs[0].swapData?.orderUri).equals('https://myplugin.com/1234')
+    expect(txs[0].txSecret).equals('open sesame')
+
+    // The editing API still works:
+    await wallet.saveTxMetadata({
+      txid: tx.txid,
+      tokenId: null,
+      metadata: { name: 'renamed' }
+    })
+    txs = await wallet.getTransactions({ tokenId: null })
+    expect(txs[0].metadata?.name).equals('renamed')
+  })
+
+  it('cannot change a saved transaction the core has not loaded', async function () {
+    const { account, config, context, wallet } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 100 }) // Spending balance
+
+    // Perform and save the spend:
+    let tx = await wallet.makeSpend({
+      tokenId: null,
+      spendTargets: [{ nativeAmount: '50', publicAddress: 'somewhere' }],
+      metadata: { name: 'me' }
+    })
+    tx = await wallet.signTx(tx)
+    await wallet.broadcastTx(tx)
+    await wallet.saveTx(tx)
+
+    // Log in again, so the core only knows the file by name:
+    await account.logout()
+    const account2 = await context.loginWithPIN(fakeUser.username, fakeUser.pin)
+    const wallet2 = await account2.waitForCurrencyWallet(wallet.id)
+    await wallet2.saveTx({ ...tx, metadata: { name: 'mallory' } })
+
+    // The saved file is untouched:
+    const paths = justFiles(await wallet2.disklet.list('transaction'))
+    expect(paths.length).equals(1)
+    const file = JSON.parse(await wallet2.disklet.getText(paths[0]))
+    expect(file.tokens[''].metadata.name).equals('me')
   })
 
   it('can update metadata', async function () {
