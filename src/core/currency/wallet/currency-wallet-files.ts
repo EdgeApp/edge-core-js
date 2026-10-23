@@ -531,7 +531,8 @@ export async function updateCurrencyWalletTxMetadata(
   fakeCallbacks: EdgeCurrencyEngineCallbacks,
   metadataChange?: EdgeMetadataChange,
   assetAction?: EdgeAssetAction,
-  savedAction?: EdgeTxAction
+  savedAction?: EdgeTxAction,
+  fileChange?: Partial<TransactionFile>
 ): Promise<void> {
   const { dispatch, state, walletId } = input.props
   const disklet = getStorageWalletDisklet(state, walletId)
@@ -561,6 +562,7 @@ export async function updateCurrencyWalletTxMetadata(
   // Merge with old file
   const newFile: TransactionFile = {
     ...oldFile,
+    ...fileChange,
     creationDate,
     currencies: new Map(oldFile?.currencies ?? []),
     internal: true,
@@ -621,39 +623,14 @@ export async function setupNewTxMetadata(
     internal: true,
     creationDate,
     currencies: new Map(),
-    feeRateUsed: tx.feeRateUsed,
     tokens: new Map(),
-    savedAction: tx.savedAction,
-    swap: tx.swapData
+    ...getTxFileFields(tx)
   }
   txFile.tokens.set(tx.tokenId, {
     assetAction: tx.assetAction,
     metadata: tx.metadata ?? {},
     nativeAmount: tx.nativeAmount
   })
-
-  // Set up the fee metadata:
-  if (tx.networkFeeOption != null) {
-    txFile.feeRateRequested =
-      tx.networkFeeOption === 'custom'
-        ? tx.requestedCustomFee
-        : tx.networkFeeOption
-  }
-
-  // Set up payees:
-  if (tx.spendTargets != null) {
-    txFile.payees = tx.spendTargets.map(target => ({
-      currency: target.currencyCode,
-      address: target.publicAddress,
-      amount: target.nativeAmount,
-      tag: target.memo
-    }))
-
-    // Only write device description if it's a spend
-    if (tx.deviceDescription != null)
-      txFile.deviceDescription = tx.deviceDescription
-  }
-  if (typeof tx.txSecret === 'string') txFile.secret = tx.txSecret
 
   // Save the new file:
   dispatch({
@@ -669,6 +646,43 @@ export async function setupNewTxMetadata(
   })
 
   return { fileName, txFile }
+}
+
+/**
+ * Picks the transaction file fields a transaction carries,
+ * other than its per-token data. Fields the transaction leaves unset
+ * are left out, so they do not replace stored values in a merge.
+ */
+export function getTxFileFields(tx: EdgeTransaction): Partial<TransactionFile> {
+  const out: Partial<TransactionFile> = {}
+  if (tx.feeRateUsed != null) out.feeRateUsed = tx.feeRateUsed
+  if (tx.savedAction != null) out.savedAction = tx.savedAction
+  if (tx.swapData != null) out.swap = tx.swapData
+
+  // Set up the fee metadata:
+  if (tx.networkFeeOption != null) {
+    out.feeRateRequested =
+      tx.networkFeeOption === 'custom'
+        ? tx.requestedCustomFee
+        : tx.networkFeeOption
+  }
+
+  // Set up payees:
+  if (tx.spendTargets != null) {
+    out.payees = tx.spendTargets.map(target => ({
+      currency: target.currencyCode,
+      address: target.publicAddress,
+      amount: target.nativeAmount,
+      tag: target.memo
+    }))
+
+    // Only write device description if it's a spend
+    if (tx.deviceDescription != null)
+      out.deviceDescription = tx.deviceDescription
+  }
+  if (typeof tx.txSecret === 'string') out.secret = tx.txSecret
+
+  return out
 }
 
 /**
