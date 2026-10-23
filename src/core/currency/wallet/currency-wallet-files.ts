@@ -672,6 +672,27 @@ export async function setupNewTxMetadata(
 }
 
 /**
+ * Returns true if a transaction's metadata is on disk,
+ * as opposed to only being set up in memory, or not at all.
+ */
+export async function isTxFileSaved(
+  input: CurrencyWalletInput,
+  txid: string
+): Promise<boolean> {
+  const { state, walletId } = input.props
+  const disklet = getStorageWalletDisklet(state, walletId)
+
+  // We list the files on disk at startup,
+  // so a transaction we have no name for has no file:
+  const txidHash = hashStorageWalletFilename(state, walletId, txid)
+  const fileName = input.props.walletState.fileNames[txidHash]?.fileName
+  if (fileName == null) return false
+
+  const file = await transactionFile.load(disklet, `transaction/${fileName}`)
+  return file != null
+}
+
+/**
  * Persists metadata for a transaction to disk.
  */
 export async function saveTxMetadataFile(

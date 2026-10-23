@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- changed: `EdgeCurrencyWallet.saveTx` no longer changes a transaction that already has saved data. Use `saveTxMetadata` or `saveTxAction` to edit one.
+- changed: Document how the `EdgeCurrencyWallet` save methods treat saved transactions.
+- fixed: `EdgeCurrencyWallet.saveTx` keeps the caller's metadata and swap data when the engine reported the transaction first.
+
 ## 2.53.0 (2026-10-20)
 
 - changed: Document `EdgeSwapSendRequest.toAddresses` as a preferred-first list that a plugin can pick a specific address type from.
