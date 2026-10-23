@@ -70,6 +70,7 @@ import {
 } from './currency-wallet-cleaners'
 import { dateFilter, searchStringFilter } from './currency-wallet-export'
 import {
+  getTxFileFields,
   loadTxFiles,
   renameCurrencyWallet,
   saveTxMetadataFile,
@@ -893,11 +894,17 @@ export function makeCurrencyWalletApi(
         await saveTxMetadataFile(input, fileName, txFile)
         fakeCallbacks.onTransactions([{ isNew: true, transaction }])
       } else {
+        // The engine may report a transaction before the caller saves it,
+        // so keep the caller's metadata and other file data:
         await updateCurrencyWalletTxMetadata(
           input,
           transaction.txid,
           transaction.tokenId,
-          fakeCallbacks
+          fakeCallbacks,
+          transaction.metadata,
+          transaction.assetAction,
+          transaction.savedAction,
+          getTxFileFields(transaction)
         )
       }
       await engine.saveTx(transaction)

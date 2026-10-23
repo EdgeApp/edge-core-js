@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: `EdgeCurrencyWallet.saveTx` no longer drops metadata or swap data on a transaction the engine already reported.
+
 ## 2.53.0 (2026-10-20)
 
 - changed: Document `EdgeSwapSendRequest.toAddresses` as a preferred-first list that a plugin can pick a specific address type from.

@@ -1,6 +1,7 @@
 import { makeAssertLog } from 'assert-log'
 import { add } from 'biggystring'
 import { expect } from 'chai'
+import { justFiles } from 'disklet'
 import { describe, it } from 'mocha'
 
 import {
@@ -623,6 +624,114 @@ describe('currency wallets', function () {
     // Calling save again will not emit a newTransactions event:
     await wallet.saveTx(tx)
     await log.waitFor(1).assert('changed spend me')
+  })
+
+  it('can save metadata for a spend the engine already reported', async function () {
+    const { wallet, config } = await makeFakeCurrencyWallet()
+    await config.changeUserSettings({ balance: 100 }) // Spending balance
+
+    // Perform the spend:
+    const metadata: EdgeMetadata = { name: 'me', category: 'exchange:To BTC' }
+    const assetAction: EdgeAssetAction = {
+      assetActionType: 'swap'
+    }
+    const savedAction: EdgeTxAction = {
+      actionType: 'swap',
+      swapInfo: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: 'support@myemail.com',
+        isDex: false,
+        orderUri: undefined
+      },
+      isEstimate: false,
+      payoutAddress: '0xpayoutaddress',
+      payoutWalletId: '0xwalletid',
+      refundAddress: undefined,
+      privacy: undefined,
+      orderId: 'myorderid',
+      orderUri: 'https://myplugin.com',
+      canBePartial: false,
+      fromAsset: {
+        pluginId: 'fakecoin',
+        tokenId: null,
+        nativeAmount: '50'
+      },
+      toAsset: {
+        pluginId: 'bitcoin',
+        tokenId: null,
+        nativeAmount: '1'
+      }
+    }
+    const swapData: EdgeTxSwap = {
+      orderId: '1234',
+      isEstimate: false,
+      plugin: {
+        pluginId: 'myplugin',
+        displayName: 'My Plugin',
+        supportEmail: undefined
+      },
+      payoutAddress: 'get it here',
+      payoutCurrencyCode: 'TOKEN',
+      payoutTokenId: 'mytokenid',
+      payoutNativeAmount: '1',
+      payoutWalletId: 'mywallet'
+    }
+    let tx = await wallet.makeSpend({
+      tokenId: null,
+      spendTargets: [{ nativeAmount: '50', publicAddress: 'somewhere' }],
+      metadata,
+      assetAction,
+      savedAction,
+      swapData
+    })
+    tx = await wallet.signTx(tx)
+    await wallet.broadcastTx(tx)
+
+    // The engine reports the spend before the caller saves it:
+    await config.changeUserSettings({
+      txs: { spend: { isSend: true, nativeAmount: '-73' } }
+    })
+    await wallet.saveTx(tx)
+
+    // Validate the result:
+    const txs = await wallet.getTransactions({ tokenId: null })
+    expect(txs.length).equals(1)
+    expect(txs[0].nativeAmount).equals('-73')
+    expect(txs[0].metadata).deep.equals({
+      bizId: undefined,
+      exchangeAmount: {},
+      notes: undefined,
+      ...metadata
+    })
+    expect(txs[0].assetAction).deep.equals(assetAction)
+    expect(txs[0].savedAction).deep.equals(savedAction)
+    expect(txs[0].swapData).deep.equals({
+      orderUri: undefined,
+      refundAddress: undefined,
+      ...swapData
+    })
+    expect(txs[0].spendTargets).deep.equals([
+      {
+        currencyCode: 'FAKE',
+        memo: undefined,
+        nativeAmount: '50',
+        publicAddress: 'somewhere',
+        uniqueIdentifier: undefined
+      }
+    ])
+    expect(txs[0].txSecret).equals('open sesame')
+
+    // The saved file keeps the caller's data:
+    const paths = justFiles(await wallet.disklet.list('transaction'))
+    expect(paths.length).equals(1)
+    const file = JSON.parse(await wallet.disklet.getText(paths[0]))
+    expect(file.tokens['']).deep.equals({
+      assetAction,
+      metadata: { exchangeAmount: {}, ...metadata }
+    })
+    expect(file.savedAction.orderId).equals('myorderid')
+    expect(file.swap.orderId).equals('1234')
   })
 
   it('can update metadata', async function () {
