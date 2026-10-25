@@ -304,15 +304,11 @@ export function sortQuotes(
 ): EdgeSwapQuote[] {
   const { preferPluginId, preferType, promoCodes } = opts
   return quotes.sort((a, b) => {
-    // Prioritize transfer plugin:
-    if (a.pluginId === 'transfer') return -1
-    if (b.pluginId === 'transfer') return 1
-
     // Always return quotes from the preferred provider:
     if (a.pluginId === preferPluginId) return -1
     if (b.pluginId === preferPluginId) return 1
 
-    // Prefer based on plugin but always allow `transfer` plugins:
+    // Prefer based on plugin type:
     if (preferType != null) {
       const aMatchesType =
         (a.swapInfo.isDex === true && preferType === 'DEX') ||

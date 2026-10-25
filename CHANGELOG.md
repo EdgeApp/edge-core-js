@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- removed: Top-ranking of quotes from a swap plugin named `transfer`
+
 ## 2.53.0 (2026-10-20)
 
 - changed: Document `EdgeSwapSendRequest.toAddresses` as a preferred-first list that a plugin can pick a specific address type from.
