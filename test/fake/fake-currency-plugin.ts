@@ -110,6 +110,11 @@ export interface FakePluginTestConfig {
    * engine's own status, so a test can hold or reject that query.
    */
   stakingStatusHook?: () => Promise<EdgeStakingStatus>
+
+  /**
+   * If set, receives each transaction an engine broadcasts.
+   */
+  onBroadcast?: (transaction: EdgeTransaction) => void
 }
 
 export const fakePluginTestConfig: FakePluginTestConfig = {
@@ -123,7 +128,8 @@ export const fakePluginTestConfig: FakePluginTestConfig = {
   failEngineFor: undefined,
   onEngineKill: undefined,
   onEngineCallbacks: undefined,
-  stakingStatusHook: undefined
+  stakingStatusHook: undefined,
+  onBroadcast: undefined
 }
 
 /**
@@ -463,6 +469,9 @@ class FakeCurrencyEngine implements EdgeCurrencyEngine {
   }
 
   broadcastTx(transaction: EdgeTransaction): Promise<EdgeTransaction> {
+    if (fakePluginTestConfig.onBroadcast != null) {
+      fakePluginTestConfig.onBroadcast(transaction)
+    }
     return Promise.resolve(transaction)
   }
 
@@ -525,9 +534,14 @@ class FakeCurrencyTools implements EdgeCurrencyTools {
   }
 
   getSplittableTypes(publicWalletInfo: EdgeWalletInfo): string[] {
-    return this.currencyInfo.walletType === 'wallet:fakecoin'
-      ? ['wallet:tulipcoin']
-      : []
+    switch (this.currencyInfo.walletType) {
+      case 'wallet:fakecoin':
+        return ['wallet:tulipcoin']
+      case 'wallet:bitcoin':
+        return ['wallet:ecashbitcoin']
+      default:
+        return []
+    }
   }
 
   // URI parsing:

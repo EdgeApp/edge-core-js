@@ -21,6 +21,11 @@ import {
   maybeFindCurrencyPluginId
 } from '../plugins/plugins-selectors'
 import { ApiInput } from '../root-pixie'
+import {
+  ecxWalletTypes,
+  resumeEcxProtection,
+  saveEcxProtectionPending
+} from './ecx-protection'
 import { makeKeysKit } from './keys'
 import { asEdgeStorageKeys, wasEdgeStorageKeys } from './storage-keys'
 
@@ -158,8 +163,9 @@ export async function splitWalletInfo(
       } else if (rejectDupes) {
         if (
           // It's OK to re-split if we are adding protection:
-          walletInfo.type !== 'wallet:bitcoincash' ||
-          newWalletInfo.type !== 'wallet:bitcoinsv'
+          (walletInfo.type !== 'wallet:bitcoincash' ||
+            newWalletInfo.type !== 'wallet:bitcoinsv') &&
+          !needsEcxProtection(walletInfo.type, newWalletInfo.type)
         ) {
           throw new Error(
             `This wallet has already been split (${newWalletInfo.type})`
@@ -189,6 +195,7 @@ export async function splitWalletInfo(
   }
 
   // Wait for the new wallets to load:
+  const sourceWalletType = walletInfo.type
   const out = await Promise.all(
     splitWallets.map(async splitInfo => {
       const walletInfo = splitInfos.get(splitInfo.walletType)
@@ -201,7 +208,8 @@ export async function splitWalletInfo(
           walletInfo.id,
           toCreate.find(info => info.type === splitInfo.walletType) != null
             ? splitInfo
-            : undefined
+            : undefined,
+          needsEcxProtection(sourceWalletType, splitInfo.walletType)
         )
       )
     })
@@ -213,7 +221,8 @@ export async function splitWalletInfo(
 async function finishWalletSplitting(
   ai: ApiInput,
   walletId: string,
-  item?: EdgeSplitCurrencyWallet
+  item: EdgeSplitCurrencyWallet | undefined,
+  protectEcx: boolean
 ): Promise<EdgeCurrencyWallet> {
   const wallet = await waitForCurrencyWallet(ai, walletId)
 
@@ -228,6 +237,16 @@ async function finishWalletSplitting(
     await wallet
       .setFiatCurrencyCode(item.fiatCurrencyCode)
       .catch((error: unknown) => ai.props.onError(error))
+  }
+
+  // The protection waits for the wallet to sync, so it runs in the
+  // background. Its pending status is saved first, so the wallet's next load
+  // resumes it if this session ends before the sweep goes out:
+  if (protectEcx) {
+    await saveEcxProtectionPending(wallet)
+    resumeEcxProtection(ai, wallet).catch((error: unknown) =>
+      ai.props.onError(error)
+    )
   }
 
   return wallet
@@ -272,6 +291,19 @@ async function protectBchWallet(wallet: EdgeCurrencyWallet): Promise<void> {
   const signedTaintTx = await wallet.signTx(taintTx)
   const broadcastedTaintTx = await wallet.broadcastTx(signedTaintTx)
   await wallet.saveTx(broadcastedTaintTx)
+}
+
+/**
+ * Splitting Bitcoin into eCash (ECX) needs replay protection,
+ * since both chains accept the same transactions.
+ */
+function needsEcxProtection(
+  walletType: string,
+  newWalletType: string
+): boolean {
+  return (
+    walletType === 'wallet:bitcoin' && ecxWalletTypes.includes(newWalletType)
+  )
 }
 
 /**

@@ -22,6 +22,7 @@ import { snooze } from '../../../util/snooze'
 import { makeTokenInfo } from '../../account/custom-tokens'
 import { Dispatch } from '../../actions'
 import { makeLog } from '../../log/log'
+import { ecxWalletTypes, resumeEcxProtection } from '../../login/ecx-protection'
 import { getCurrencyTools } from '../../plugins/plugins-selectors'
 import { RootProps, toApiInput } from '../../root-pixie'
 import {
@@ -379,6 +380,23 @@ export const walletPixie: TamePixie<CurrencyWalletProps> = combinePixies({
 
     const currencyWalletApi = makeCurrencyWalletApi(input, publicWalletInfo)
     input.onOutput(currencyWalletApi)
+
+    return await stopUpdates
+  },
+
+  // Resumes the replay protection of an eCash (ECX) wallet split from
+  // Bitcoin, which an earlier session may have left unfinished:
+  ecxProtection: (input: CurrencyWalletInput) => async () => {
+    const { walletOutput } = input.props
+    if (walletOutput == null) return
+    const { walletApi } = walletOutput
+    if (walletApi == null) return
+
+    if (ecxWalletTypes.includes(walletApi.type)) {
+      resumeEcxProtection(toApiInput(input), walletApi).catch(error =>
+        input.props.onError(error)
+      )
+    }
 
     return await stopUpdates
   },
