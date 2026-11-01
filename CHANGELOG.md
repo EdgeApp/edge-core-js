@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `EdgeSwapRequest.allowInsufficientFunds` and `EdgeSwapQuote.insufficientFunds`, for quoting swaps a wallet cannot yet pay for.
+
 ## 2.54.0 (2026-10-29)
 
 - added: Splitting a Bitcoin wallet into eCash (ECX) sweeps the new ECX wallet to itself once it syncs, so its coins leave the UTXOs it shares with Bitcoin. The wallet records the sweep in `EcxProtection.json`, and a sweep left unfinished resumes at its next load.
