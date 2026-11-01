@@ -81,3 +81,17 @@ describe('wrapQuote close', function () {
     expect(released).equals(1)
   })
 })
+
+describe('wrapQuote insufficientFunds', function () {
+  it('passes the shortfall through to the caller', function () {
+    const insufficientFunds = { tokenId: null, networkFee: '21000' }
+    const quote: EdgeSwapQuote = { ...makeQuote(), insufficientFunds }
+    const wrapped = wrapQuote(swapPlugins, request, quote)
+    expect(wrapped.insufficientFunds).deep.equals(insufficientFunds)
+  })
+
+  it('leaves a funded quote unflagged', function () {
+    const wrapped = wrapQuote(swapPlugins, request, makeQuote())
+    expect(wrapped.insufficientFunds).equals(undefined)
+  })
+})

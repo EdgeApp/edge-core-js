@@ -265,6 +265,7 @@ export function wrapQuote(
     canBePartial: quote.canBePartial,
     expirationDate: quote.expirationDate,
     fromNativeAmount: quote.fromNativeAmount,
+    insufficientFunds: quote.insufficientFunds,
     isEstimate: quote.isEstimate,
     maxFulfillmentSeconds: quote.maxFulfillmentSeconds,
     networkFee: quote.networkFee,

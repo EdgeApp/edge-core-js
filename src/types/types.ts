@@ -1589,6 +1589,25 @@ export interface EdgeSwapRequestBase {
    * a downgrade it has no way to detect. Omitted means any route will do.
    */
   privacy?: 'required'
+
+  /**
+   * Quote even when the from wallet cannot cover this request. A plugin that
+   * would otherwise fail with `InsufficientFundsError` answers with a quote
+   * carrying `EdgeSwapQuote.insufficientFunds` instead, so the user can compare
+   * prices before funding the wallet. Omitted means the request fails as usual.
+   */
+  allowInsufficientFunds?: boolean
+}
+
+/**
+ * The shortfall behind a quote that the from wallet cannot pay for.
+ */
+export interface EdgeSwapInsufficientFunds {
+  /** The asset the wallet is short of, which may be the parent gas asset. */
+  tokenId: EdgeTokenId
+
+  /** The network fee the engine reported, when it could determine one. */
+  networkFee?: string
 }
 
 /**
@@ -1668,6 +1687,13 @@ export interface EdgeSwapQuote {
 
   readonly pluginId: string
   readonly expirationDate?: Date
+
+  /**
+   * Set when `EdgeSwapRequest.allowInsufficientFunds` let this quote through
+   * without the funds to pay for it. `approve` fails with
+   * `InsufficientFundsError` for such a quote.
+   */
+  readonly insufficientFunds?: EdgeSwapInsufficientFunds
 
   readonly approve: (opts?: EdgeSwapApproveOptions) => Promise<EdgeSwapResult>
   readonly close: () => Promise<void>
