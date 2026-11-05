@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- changed: `EdgeCurrencyWallet.saveTx` no longer changes a transaction that already has saved data. Use `saveTxMetadata` or `saveTxAction` to edit one.
+- changed: Document how the `EdgeCurrencyWallet` save methods treat saved transactions.
+- fixed: `EdgeCurrencyWallet.saveTx` keeps the caller's metadata and swap data when the engine reported the transaction first.
+
 ## 2.54.0 (2026-10-29)
 
 - added: Splitting a Bitcoin wallet into eCash (ECX) sweeps the new ECX wallet to itself once it syncs, so its coins leave the UTXOs it shares with Bitcoin. The wallet records the sweep in `EcxProtection.json`, and a sweep left unfinished resumes at its next load.

@@ -1443,9 +1443,28 @@ export interface EdgeCurrencyWallet {
     paymentProtocolUrl: string
   ) => Promise<EdgePaymentProtocolInfo>
   readonly makeSpend: (spendInfo: EdgeSpendInfo) => Promise<EdgeTransaction>
+
+  /**
+   * Saves a transaction along with the data the caller attached to it,
+   * such as metadata, actions, payees, and swap data.
+   * Only the first save writes this data, even if the engine has already
+   * reported the transaction. Saving it again changes nothing,
+   * so use `saveTxMetadata` or `saveTxAction` to edit a saved transaction.
+   */
   readonly saveTx: (tx: EdgeTransaction) => Promise<void>
+
+  /**
+   * Replaces a saved transaction's `assetAction` for the given token,
+   * and its `savedAction`.
+   */
   readonly saveTxAction: (opts: EdgeSaveTxActionOptions) => Promise<void>
+
+  /**
+   * Merges metadata into a saved transaction.
+   * Set a field to `null` to delete it.
+   */
   readonly saveTxMetadata: (opts: EdgeSaveTxMetadataOptions) => Promise<void>
+
   readonly signTx: (tx: EdgeTransaction) => Promise<EdgeTransaction>
   readonly sweepPrivateKeys: (
     edgeSpendInfo: EdgeSpendInfo
