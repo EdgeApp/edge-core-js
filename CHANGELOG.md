@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.55.0 (2026-11-05)
+
 - changed: `EdgeCurrencyWallet.saveTx` no longer changes a transaction that already has saved data. Use `saveTxMetadata` or `saveTxAction` to edit one.
 - changed: Document how the `EdgeCurrencyWallet` save methods treat saved transactions.
 - fixed: `EdgeCurrencyWallet.saveTx` keeps the caller's metadata and swap data when the engine reported the transaction first.
