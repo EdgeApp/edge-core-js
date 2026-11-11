@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Android keyboard no longer stays open with no input focused after a text input closes.
+
 ## 2.55.0 (2026-11-05)
 
 - changed: `EdgeCurrencyWallet.saveTx` no longer changes a transaction that already has saved data. Use `saveTxMetadata` or `saveTxAction` to edit one.

@@ -66,6 +66,11 @@ class EdgeCoreWebView extends WebView {
     mContext = context;
     mNative = new EdgeNative(mContext.getFilesDir());
 
+    // This WebView is hidden and never takes input. If it can take focus,
+    // Android hands it focus when a focused text input unmounts, and the
+    // keyboard stays open over the app with no React Native input behind it:
+    setFocusable(false);
+
     getSettings().setAllowFileAccess(false);
     getSettings().setJavaScriptEnabled(true);
     setWebViewClient(new LocalContentWebViewClient(this));
