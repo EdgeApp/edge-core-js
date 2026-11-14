@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.55.1 (2026-11-14)
+
 - fixed: Android keyboard no longer stays open with no input focused after a text input closes.
 
 ## 2.55.0 (2026-11-05)
